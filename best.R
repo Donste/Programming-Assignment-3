@@ -3,11 +3,11 @@
 getOutcomeColumnNumberOfTheFile <- function (outcome){
   outcomeColumnNumber <- NULL
   if (outcome == "heart attack"){
-    outcomeColumnNumber <- 13
+    outcomeColumnNumber <- 11
   }else if (outcome == "heart failure"){
-    outcomeColumnNumber <- 19
+    outcomeColumnNumber <- 17
   }else if (outcome == "pneumonia"){
-    outcomeColumnNumber <- 25
+    outcomeColumnNumber <- 23
   }else{
     stop("invalid outcome")
   }
@@ -15,23 +15,33 @@ getOutcomeColumnNumberOfTheFile <- function (outcome){
 }
 ##If valid state return the frame corresponding with the state if not throws error
 getOutcomeState <- function (fileFrame, state){
+  ##Column number where the 2 letters state code is located in
+  ##outcome-of-care-measures.csv
+  twoLettersCodeColumnNumber <- 7
   stateOutcomeFrame <- subset(fileFrame,fileFrame[,twoLettersCodeColumnNumber]==state)
-  if(nrow(stateOutcomeFrame == 0)){
+  if(nrow(stateOutcomeFrame) == 0){
     stop("invalid state")
   }
   return (stateOutcomeFrame)
 }
+getDataAsNumericVector <- function (frame,dataColumn){
+  ##NA literal "Not Available"
+  notAvailable <- "Not Available"
+  frameWihoutNotAvailable <- subset(frame,frame[,dataColumn]!=notAvailable)
+  ##Gets only numeric values as vector
+  outputVector <- as.numeric(as.vector(frameWihoutNotAvailable[,dataColumn]))
+  return (outputVector) 
+}
 best <- function(state, outcome) {
-  ##Column number where the 2 letters state code is located in
-  ##outcome-of-care-measures.csv
-  twoLettersCodeColumnNumber <- 7
+  ##Column where hospital names are located in the outcome-of-care-measures.csv file
+  hospitalNameColumnNumber <- 2
   ## Read outcome data
   fileFrame <- read.csv("outcome-of-care-measures.csv", colClasses = "character")
   ## Check that state and outcome are valid
-  outcomeColumnNumber <- getOutcomeColumnNumberOfTheFile(outcome)
   outcomeStateFrame <- getOutcomeState(fileFrame,state)
-  ## Return hospital name in that state with lowest 30-day death 
-  ## rate
-  outcomeStateWithoutNotAvailable <- subset(outcomeStateFrame[outcomeStateFrame[,outcomeColumnNumber]!="Not Available"]) 
-  return(min(outcomeStateFrame[,outcomeColumnNumer]))
+  outcomeColumnNumber <- getOutcomeColumnNumberOfTheFile(outcome)
+  ## Return hospital name in that state with lowest 30-day death rate
+  outcomeDataAsNumericVector <- getDataAsNumericVector(outcomeStateFrame,outcomeColumnNumber)
+  hospitalVector <- subset(outcomeStateFrame,outcomeStateFrame[,outcomeColumnNumber] == as.character(min(outcomeDataAsNumericVector)))[,hospitalNameColumnNumber]
+  return(hospitalVector[1])
 }
